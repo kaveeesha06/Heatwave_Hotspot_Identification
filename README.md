@@ -29,7 +29,7 @@ Heatwave occurrence and severity vary widely across regions of India. Looking at
 
 > Raw data is not committed to the repository. Download it from the IMD link above into `data/raw/`.
 
-## 4. Final Tech Stack
+## 4. Tech Stack
 
 The table below lists the final technologies and libraries utilized in this project:
 
@@ -206,30 +206,3 @@ jupyter notebook notebooks/01_eda_and_clustering.ipynb
 - It does not model spatial adjacency directly (DBSCAN or Gaussian Mixture models are natural comparisons).
 - It identifies areas that are **consistently hot**, not individual heatwave events. For event-level hotspots, cluster on a specific heatwave period (for example, April to May 2024).
 - Hotspots are derived from historical gridded data and are not a forecast.
-
-## 9. Future Work
-
-- Compare K-Means with DBSCAN and Gaussian Mixture Models.
-- Add a temporal view showing how hotspots shift from March to June.
-- Generate stakeholder-specific advisories per hotspot using an LLM (Phase V of the use case), with a human-review step before dissemination, in line with the Human-in-the-Loop governance requirement.
-- Integrate localized IoT Automated Weather Station (AWS) observations to validate hotspots (Phases III and IV).
-
-## 10. Responsible AI Note
-
-This project is an academic prototype. Cluster labels and any advisories are **not official warnings**. Official heatwave forecasts and advisories should be taken from the India Meteorological Department. Uncertainty (silhouette score, stability across years) should always be reported alongside results.
-
-## 11. Team
-
-| Name | Roll No. | Role |
-|---|---|---|
-| | | |
-| | | |
-| | | |
-
-**Guide:** Dr. Radhika Kotecha, Professor and Head, Department of Information Technology, K J Somaiya Institute of Technology
-*(update if your mini project guide is different)*
-
-## 12. Acknowledgements
-
-- India Meteorological Department (IMD), Pune for the gridded temperature data
-- K J Somaiya Institute of Technology, Framework for AI Use Case Integration in Curriculum Delivery (Use Case KJS-CES-01)
