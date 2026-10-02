@@ -113,41 +113,91 @@ heatwave-kmeans/
 └── README.md
 ```
 
-## 7. Installation and Usage
+## 7. Execution Sequence & Usage Guide
 
+Follow the commands below in sequential order to run the entire pipeline from data ingestion to the interactive dashboard.
+
+### Quick Start (Run in 3 Steps)
+
+If your environment is already set up:
 ```bash
-# 1. Clone the repository
-git clone <your-repo-url>
-cd heatwave-kmeans
-
-# 2. Create a virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Place IMD GRD files in data/raw/
-
-# 5. Build features
+# Step 1: Generate features
 python src/features.py
 
-# 6. Launch the dashboard
-streamlit run app.py
+# Step 2: Run clustering & validation
+python src/cluster.py
+
+# Step 3: Launch dashboard
+python -m streamlit run app.py
 ```
 
-**Suggested `requirements.txt`**
+---
 
+### Detailed Step-by-Step Sequence
+
+#### Step 1: Environment Setup
+Open your terminal (PowerShell or Bash) in the project root directory:
+
+```bash
+# 1. Create a virtual environment
+python -m venv venv
+
+# 2. Activate the virtual environment
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+# 3. Install required dependencies
+pip install -r requirements.txt
 ```
-numpy
-pandas
-xarray
-imdlib
-scikit-learn
-plotly
-streamlit
-pyarrow
+
+#### Step 2: Download & Ingest IMD Gridded Temperature Data
+Fetches official IMD 1.0° daily maximum temperature binary (`.GRD`) files, masks sentinel ocean values (`99.9`), and cleans the grid to mainland India (355 land grid cells):
+
+```bash
+python src/load_data.py
 ```
+> **Output:** Raw files stored in `data/raw/tmax/` (`2022.GRD`, `2023.GRD`, `2024.GRD`). Includes an offline synthetic generator fallback if IMD servers are unreachable.
+
+#### Step 3: Engineer Per-Grid-Cell Thermal Features
+Computes 6 seasonal heat behavior metrics (Mean $T_{max}$, Peak $T_{max}$, Days $\ge 40^\circ\text{C}$, Heatwave days, Max hot streak, Temp volatility) over the March–June heatwave season:
+
+```bash
+python src/features.py
+```
+> **Output:** Caches clean feature tables in `data/processed/` (`features_heatwave_season.parquet` and individual year parquets).
+
+#### Step 4: Run K-Means Clustering & Scientific Diagnostics
+Standardizes features with `StandardScaler`, sweeps $k \in [2, 8]$ computing **Inertia (Elbow)** and **Silhouette scores**, fits $k=4$, and validates against known heatwave zones:
+
+```bash
+python src/cluster.py
+```
+> **Output:** Prints Elbow/Silhouette metrics table, cluster profile summaries, and cross-tabulation with IMD meteorological regions (Vidarbha, Rajasthan, Himalayas).
+
+#### Step 5: (Optional) Verify Interactive Plot Functions
+Verifies Plotly map rendering, radar footprints, and diagnostic charts:
+
+```bash
+python src/plots.py
+```
+
+#### Step 6: Launch the Interactive Streamlit Dashboard
+Starts the single-page decision-support web application in your browser:
+
+```bash
+python -m streamlit run app.py
+```
+> **URL:** Open your browser at **`http://localhost:8501`** to interact with the map, filters, and early warning advisories.
+
+#### Step 7: (Optional) Explore the Jupyter Notebook
+For interactive step-by-step experimentation and report generation:
+
+```bash
+jupyter notebook notebooks/01_eda_and_clustering.ipynb
+```
+*(or open `notebooks/01_eda_and_clustering.ipynb` directly in VS Code).*
 
 ## 8. Limitations
 
