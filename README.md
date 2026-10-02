@@ -1,0 +1,184 @@
+# Heatwave Hotspot Identification Using K-Means Clustering
+
+Mini project aligned with AI Use Case **KJS-CES-01: Climate Intelligence for Heatwave Monitoring, Prediction, and Early Warning** (collaborating organization: India Meteorological Department, Mumbai-Pune).
+
+This project addresses **Phase II (AI-driven heatwave analytics: hotspot identification and severity classification)** of the use case and demonstrates a lightweight version of the **Phase V decision-support dashboard**.
+
+---
+
+## 1. Problem Statement
+
+Heatwave occurrence and severity vary widely across regions of India. Looking at raw temperature maps makes it hard to see which areas behave similarly and which are persistent heat hotspots. This project groups grid cells across India into clusters with similar heat behavior using **K-Means**, then identifies and ranks the clusters so that the hottest ones can be flagged as **heatwave hotspots**.
+
+## 2. Objectives
+
+1. Load and clean IMD gridded maximum temperature data.
+2. Engineer per-grid-cell features that describe heat behavior (not just raw temperature).
+3. Apply K-Means clustering and choose the number of clusters (k) using the elbow method and silhouette score.
+4. Label clusters by severity (e.g., Low, Moderate, High, Extreme).
+5. Present results on an interactive map and dashboard.
+6. Validate the hotspots against known heatwave-prone regions of India.
+
+## 3. Dataset
+
+- **Source:** IMD Pune, gridded daily maximum temperature (GRD files)
+  https://imdpune.gov.in/lrfindex.php
+- **Attributes:** Timestamp, Latitude, Longitude, Maximum Temperature
+- **Missing values:** IMD uses a fill value (about 99.9) for no data; these are converted to `NaN`.
+- Check the IMD documentation for the exact grid resolution of the product you download.
+
+> Raw data is not committed to the repository. Download it from the IMD link above into `data/raw/`.
+
+## 4. Tech Stack
+
+| Layer | Tool | Purpose |
+|---|---|---|
+| Data extraction | Python, `numpy`, `imdlib` | Read IMD `.GRD` files |
+| Processing | `pandas`, `xarray` (optional) | Gridded time series handling and feature computation |
+| Machine learning | `scikit-learn` | `KMeans`, `StandardScaler`, silhouette and Davies-Bouldin scores |
+| Visualization | `plotly` (or `folium`) | Interactive maps and plots |
+| Dashboard | `streamlit` | Web interface in pure Python |
+| Storage (optional) | Parquet / SQLite | Cache processed features |
+| Tooling | Jupyter, VS Code, Git/GitHub | Exploration, development, version control |
+
+**Notes on choices**
+- `xarray` is convenient for 3D (time x lat x lon) data but not mandatory. Data can be converted to a flat `pandas` table right after loading.
+- Alternatives to Streamlit: Dash, Gradio, Panel, Voila, or Flask/FastAPI with a Leaflet frontend.
+
+## 5. How It Works
+
+```
+IMD GRD files -> imdlib -> cleaning -> feature engineering
+-> scaling -> K-Means (k via elbow/silhouette) -> cluster labeling
+-> map visualization -> Streamlit dashboard
+```
+
+### Step 1: Data acquisition
+Download Tmax GRD files from IMD and load them with `imdlib`, giving daily Tmax over India.
+
+### Step 2: Preprocessing
+- Replace fill values with `NaN`.
+- Restrict to the heatwave season (March to June) and a chosen range of years.
+- Flatten to one row per grid cell.
+
+### Step 3: Feature engineering
+K-Means on raw Tmax gives uninteresting results, so features are built per grid cell:
+
+- Mean seasonal Tmax
+- Maximum Tmax recorded
+- Number of days with Tmax >= 40 C
+- Number of heatwave days (IMD criteria: Tmax >= 40 C in plains and at least 4.5 C above normal, or Tmax >= 45 C)
+- Longest consecutive hot-day streak
+- Standard deviation of Tmax
+
+Latitude and longitude are deliberately **excluded** so that clusters reflect heat behavior rather than geography. Including them would force spatially contiguous clusters.
+
+### Step 4: Scaling
+`StandardScaler` is applied because K-Means is distance-based and sensitive to feature scale.
+
+### Step 5: Choosing k
+Run K-Means for k = 2 to 10 and compare the elbow curve (inertia) and silhouette score. Typically k between 3 and 5 works well; the final choice is justified in the report.
+
+### Step 6: Clustering and labeling
+Fit K-Means, rank clusters by mean hot-day count or mean Tmax, and label them (Low, Moderate, High, Extreme). The top cluster is reported as the **heatwave hotspot**. This provides a simple severity classification in line with the use case.
+
+### Step 7: Dashboard
+The Streamlit app shows:
+- Map of India with grid cells colored by cluster
+- Sidebar filters: year, month/season, number of clusters (k)
+- Cluster profile table (average Tmax, hot days per cluster)
+- Elbow and silhouette plots
+- Optional: region-wise view using the seven IMD-defined regions
+
+### Step 8: Validation
+- Compare the extreme cluster with known heatwave-prone zones (central India, Rajasthan, Vidarbha, Odisha coast, Andhra Pradesh).
+- Check cluster stability across different years.
+- Report silhouette score and Davies-Bouldin index.
+
+## 6. Project Structure
+
+```
+heatwave-kmeans/
+├── data/
+│   ├── raw/            # IMD GRD files (not committed)
+│   └── processed/      # Feature tables (parquet)
+├── notebooks/          # EDA and k-selection experiments
+├── src/
+│   ├── load_data.py    # Read GRD files, clean, filter
+│   ├── features.py     # Per-grid-cell feature engineering
+│   ├── cluster.py      # Scaling, K-Means, evaluation, labeling
+│   └── plots.py        # Map and diagnostic plots
+├── app.py              # Streamlit dashboard
+├── requirements.txt
+└── README.md
+```
+
+## 7. Installation and Usage
+
+```bash
+# 1. Clone the repository
+git clone <your-repo-url>
+cd heatwave-kmeans
+
+# 2. Create a virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Place IMD GRD files in data/raw/
+
+# 5. Build features
+python src/features.py
+
+# 6. Launch the dashboard
+streamlit run app.py
+```
+
+**Suggested `requirements.txt`**
+
+```
+numpy
+pandas
+xarray
+imdlib
+scikit-learn
+plotly
+streamlit
+pyarrow
+```
+
+## 8. Limitations
+
+- K-Means assumes roughly spherical clusters and requires k to be fixed in advance.
+- It does not model spatial adjacency directly (DBSCAN or Gaussian Mixture models are natural comparisons).
+- It identifies areas that are **consistently hot**, not individual heatwave events. For event-level hotspots, cluster on a specific heatwave period (for example, April to May 2024).
+- Hotspots are derived from historical gridded data and are not a forecast.
+
+## 9. Future Work
+
+- Compare K-Means with DBSCAN and Gaussian Mixture Models.
+- Add a temporal view showing how hotspots shift from March to June.
+- Generate stakeholder-specific advisories per hotspot using an LLM (Phase V of the use case), with a human-review step before dissemination, in line with the Human-in-the-Loop governance requirement.
+- Integrate localized IoT Automated Weather Station (AWS) observations to validate hotspots (Phases III and IV).
+
+## 10. Responsible AI Note
+
+This project is an academic prototype. Cluster labels and any advisories are **not official warnings**. Official heatwave forecasts and advisories should be taken from the India Meteorological Department. Uncertainty (silhouette score, stability across years) should always be reported alongside results.
+
+## 11. Team
+
+| Name | Roll No. | Role |
+|---|---|---|
+| | | |
+| | | |
+| | | |
+
+**Guide:** Dr. Radhika Kotecha, Professor and Head, Department of Information Technology, K J Somaiya Institute of Technology
+*(update if your mini project guide is different)*
+
+## 12. Acknowledgements
+
+- India Meteorological Department (IMD), Pune for the gridded temperature data
+- K J Somaiya Institute of Technology, Framework for AI Use Case Integration in Curriculum Delivery (Use Case KJS-CES-01)
