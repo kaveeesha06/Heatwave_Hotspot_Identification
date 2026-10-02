@@ -47,44 +47,26 @@ st.set_page_config(
 # Custom minimalistic styling
 st.markdown("""
 <style>
-    /* Clean typography and spacing */
+    /* Clean, bright modern light theme */
+    .stApp {
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
+    }
+    [data-testid="stSidebar"] {
+        background-color: #F1F5F9 !important;
+    }
     .title-text {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #0F172A;
-        margin-bottom: 0.1rem;
+        font-size: 2.3rem;
+        font-weight: 800;
+        color: #DC2626;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.5px;
     }
     .subtitle-text {
         font-size: 1.05rem;
-        color: #475569;
+        color: #475569 !important;
+        line-height: 1.5;
         margin-bottom: 1.5rem;
-    }
-    .tag {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: 6px;
-        background-color: #F1F5F9;
-        color: #334155;
-        margin-right: 0.4rem;
-        margin-bottom: 0.5rem;
-    }
-    .tag-red {
-        background-color: #FEE2E2;
-        color: #991B1B;
-    }
-    .tag-blue {
-        background-color: #E0E7FF;
-        color: #3730A3;
-    }
-    /* Simple card styling */
-    .card {
-        background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 10px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
     }
     /* Remove unnecessary padding */
     .block-container {
@@ -180,11 +162,6 @@ if only_hotspots:
 
 # --- HEADER SECTION ---
 st.markdown("""
-<div>
-    <span class="tag tag-red">Use Case KJS-CES-01</span>
-    <span class="tag tag-blue">India Meteorological Department (IMD)</span>
-    <span class="tag">Unsupervised K-Means</span>
-</div>
 <div class="title-text">🔥 India Heatwave Hotspot Tracker</div>
 <div class="subtitle-text">
     Identifying chronic heatwave hotspots and severity zones across India (March–June) using machine learning on gridded temperature records.
@@ -312,16 +289,6 @@ with st.expander("🔬 View Machine Learning Diagnostics & Justification (Elbow 
     
     st.markdown("""
     * **Elbow Inflection:** The inertia curve shows a distinct reduction up to $k=4$, after which gains plateau.
-    * **Silhouette Quality:** $k=4$ achieves a high silhouette score ($\approx 0.45$), confirming well-separated clusters.
+    * **Silhouette Quality:** $k=4$ achieves a high silhouette score (Approx 0.45), confirming well-separated clusters.
     * **Operational Fit:** 4 clusters naturally map to the IMD's standard hazard scale: *Low, Moderate, High, Extreme Hotspot*.
     """)
-
-
-# --- FOOTER ---
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #94A3B8; font-size: 0.85rem;">
-    <b>Responsible AI Note:</b> Prototype for academic evaluation (AI Use Case KJS-CES-01). 
-    Official heatwave forecasts and warnings are issued exclusively by the India Meteorological Department (IMD).
-</div>
-""", unsafe_allow_html=True)
