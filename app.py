@@ -39,7 +39,6 @@ from src.plots import (
 # Page setup
 st.set_page_config(
     page_title="Heatwave Hotspot Tracker | IMD",
-    page_icon="🔥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -93,7 +92,7 @@ def get_diagnostics(features_df: pd.DataFrame):
 
 
 # --- SIDEBAR CONTROLS ---
-st.sidebar.markdown("## **⚙️ Quick Controls**")
+st.sidebar.markdown("## **Quick Controls**")
 
 avail_years = get_available_raw_years("data/raw") or [2022, 2023, 2024]
 year_options = ["2022–2024 (3-Year Average)"] + [str(y) for y in sorted(avail_years, reverse=True)]
@@ -121,7 +120,7 @@ selected_region = st.sidebar.selectbox(
 )
 
 only_hotspots = st.sidebar.checkbox(
-    "🔥 Show Extreme Hotspots Only",
+    "Show Extreme Hotspots Only",
     value=False,
     help="Hide milder areas and highlight only the critical heatwave corridors."
 )
@@ -161,7 +160,7 @@ if only_hotspots:
 
 # --- HEADER SECTION ---
 st.markdown("""
-<div class="title-text">🔥 India Heatwave Hotspot Tracker</div>
+<div class="title-text">India Heatwave Hotspot Tracker</div>
 <div class="subtitle-text">
     Identifying chronic heatwave hotspots and severity zones across India (March–June) using machine learning on gridded temperature records.
 </div>
@@ -223,7 +222,7 @@ st.plotly_chart(fig_map, width="stretch")
 
 
 # --- 3. SIMPLE HOTSPOT SEVERITY TABLE ---
-st.markdown("### 📊 Heatwave Severity Summary")
+st.markdown("### Heatwave Severity Summary")
 st.caption("Quantitative comparison of each heat severity tier across the country.")
 
 summary_table = profiles_df.copy()
@@ -244,14 +243,14 @@ st.dataframe(summary_display, width="stretch", hide_index=True)
 
 
 # --- 4. ACTION ADVISORIES & EARLY WARNING (PHASE V) ---
-# st.markdown("### 🛡️ Recommended Early Warning Actions")
+# st.markdown("### Recommended Early Warning Actions")
 # st.caption("Targeted public health and municipal directives based on identified heatwave severity.")
 
 # adv_col1, adv_col2 = st.columns(2)
 
 # with adv_col1:
 #     st.error("""
-#     #### 🚨 Extreme Hotspot Tier (Red Alert)
+#     #### Extreme Hotspot Tier (Red Alert)
 #     **Core Zones:** Vidarbha (Nagpur/Chandrapur), Western Rajasthan (Churu/Bikaner), Central Plains
 #     * **Outdoor Labor:** Mandate suspension of construction and manual outdoor labor between 12:00 PM and 4:00 PM.
 #     * **Public Cooling:** Open municipal cooling centers and hydration stations in crowded transit hubs.
@@ -261,7 +260,7 @@ st.dataframe(summary_display, width="stretch", hide_index=True)
 
 # with adv_col2:
 #     st.warning("""
-#     #### ⚠️ High Severity Tier (Orange Alert)
+#     #### High Severity Tier (Orange Alert)
 #     **Core Zones:** East Rajasthan, Gangetic Plains, Interior Odisha, Telangana
 #     * **Schools & Institutions:** Shift school hours to morning sessions (concluding before 11:30 AM).
 #     * **Public Alerts:** Issue daily heat advisories via SMS, local radio, and municipal message boards.
@@ -270,12 +269,12 @@ st.dataframe(summary_display, width="stretch", hide_index=True)
 #     """)
 
 # st.info("""
-# **🟢 Moderate & Low Severity Tiers (Yellow / Green):** Coastal areas (Konkan, Goa, Kerala) and Western Himalayas. Standard seasonal monitoring. Maintain regular drinking water supplies and advisories.
+# **Moderate & Low Severity Tiers (Yellow / Green):** Coastal areas (Konkan, Goa, Kerala) and Western Himalayas. Standard seasonal monitoring. Maintain regular drinking water supplies and advisories.
 # """)
 
 
 # # --- 5. OPTIONAL TECHNICAL DETAILS EXPANDER ---
-# with st.expander("🔬 View Machine Learning Diagnostics & Justification (Elbow & Silhouette)"):
+# with st.expander("View Machine Learning Diagnostics & Justification (Elbow & Silhouette)"):
 #     st.markdown("#### **Hyperparameter Validation (Choosing k=4)**")
 #     st.write(
 #         r"To ensure scientific rigor, we evaluated K-Means across $k \in [2, 8]$ using **Inertia (Elbow Method)** "
