@@ -245,34 +245,34 @@ st.dataframe(summary_display, width="stretch", hide_index=True)
 
 
 # --- 4. ACTION ADVISORIES & EARLY WARNING (PHASE V) ---
-st.markdown("### 🛡️ Recommended Early Warning Actions")
-st.caption("Targeted public health and municipal directives based on identified heatwave severity.")
+# st.markdown("### 🛡️ Recommended Early Warning Actions")
+# st.caption("Targeted public health and municipal directives based on identified heatwave severity.")
 
-adv_col1, adv_col2 = st.columns(2)
+# adv_col1, adv_col2 = st.columns(2)
 
-with adv_col1:
-    st.error("""
-    #### 🚨 Extreme Hotspot Tier (Red Alert)
-    **Core Zones:** Vidarbha (Nagpur/Chandrapur), Western Rajasthan (Churu/Bikaner), Central Plains
-    * **Outdoor Labor:** Mandate suspension of construction and manual outdoor labor between 12:00 PM and 4:00 PM.
-    * **Public Cooling:** Open municipal cooling centers and hydration stations in crowded transit hubs.
-    * **Healthcare:** Activate Heat Action Plan (HAP) Level 3 — stock IV fluids, ORS, and ice packs in all PHCs.
-    * **Water Resources:** Prioritize dedicated emergency water tankers to vulnerable informal settlements.
-    """)
+# with adv_col1:
+#     st.error("""
+#     #### 🚨 Extreme Hotspot Tier (Red Alert)
+#     **Core Zones:** Vidarbha (Nagpur/Chandrapur), Western Rajasthan (Churu/Bikaner), Central Plains
+#     * **Outdoor Labor:** Mandate suspension of construction and manual outdoor labor between 12:00 PM and 4:00 PM.
+#     * **Public Cooling:** Open municipal cooling centers and hydration stations in crowded transit hubs.
+#     * **Healthcare:** Activate Heat Action Plan (HAP) Level 3 — stock IV fluids, ORS, and ice packs in all PHCs.
+#     * **Water Resources:** Prioritize dedicated emergency water tankers to vulnerable informal settlements.
+#     """)
 
-with adv_col2:
-    st.warning("""
-    #### ⚠️ High Severity Tier (Orange Alert)
-    **Core Zones:** East Rajasthan, Gangetic Plains, Interior Odisha, Telangana
-    * **Schools & Institutions:** Shift school hours to morning sessions (concluding before 11:30 AM).
-    * **Public Alerts:** Issue daily heat advisories via SMS, local radio, and municipal message boards.
-    * **Power Grid:** Plan for 20–30% surge in cooling power demand; monitor distribution transformers.
-    * **Vulnerable Groups:** Special monitoring for infants, outdoor workers, and the elderly.
-    """)
+# with adv_col2:
+#     st.warning("""
+#     #### ⚠️ High Severity Tier (Orange Alert)
+#     **Core Zones:** East Rajasthan, Gangetic Plains, Interior Odisha, Telangana
+#     * **Schools & Institutions:** Shift school hours to morning sessions (concluding before 11:30 AM).
+#     * **Public Alerts:** Issue daily heat advisories via SMS, local radio, and municipal message boards.
+#     * **Power Grid:** Plan for 20–30% surge in cooling power demand; monitor distribution transformers.
+#     * **Vulnerable Groups:** Special monitoring for infants, outdoor workers, and the elderly.
+#     """)
 
-st.info("""
-**🟢 Moderate & Low Severity Tiers (Yellow / Green):** Coastal areas (Konkan, Goa, Kerala) and Western Himalayas. Standard seasonal monitoring. Maintain regular drinking water supplies and advisories.
-""")
+# st.info("""
+# **🟢 Moderate & Low Severity Tiers (Yellow / Green):** Coastal areas (Konkan, Goa, Kerala) and Western Himalayas. Standard seasonal monitoring. Maintain regular drinking water supplies and advisories.
+# """)
 
 
 # # --- 5. OPTIONAL TECHNICAL DETAILS EXPANDER ---
