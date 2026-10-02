@@ -132,7 +132,6 @@ with st.sidebar.expander("🛠️ Advanced ML Parameters"):
     hot_temp_threshold = st.slider("Hot Day Threshold (°C)", min_value=38.0, max_value=43.0, value=40.0, step=0.5)
 
 st.sidebar.markdown("---")
-st.sidebar.caption("IMD Mumbai-Pune Collab | AI Use Case KJS-CES-01")
 
 
 # --- DATA PIPELINE ---
