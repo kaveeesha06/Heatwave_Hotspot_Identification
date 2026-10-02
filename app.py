@@ -275,20 +275,20 @@ st.info("""
 """)
 
 
-# --- 5. OPTIONAL TECHNICAL DETAILS EXPANDER ---
-with st.expander("🔬 View Machine Learning Diagnostics & Justification (Elbow & Silhouette)"):
-    st.markdown("#### **Hyperparameter Validation (Choosing k=4)**")
-    st.write(
-        r"To ensure scientific rigor, we evaluated K-Means across $k \in [2, 8]$ using **Inertia (Elbow Method)** "
-        r"and the **Silhouette Score**:"
-    )
+# # --- 5. OPTIONAL TECHNICAL DETAILS EXPANDER ---
+# with st.expander("🔬 View Machine Learning Diagnostics & Justification (Elbow & Silhouette)"):
+#     st.markdown("#### **Hyperparameter Validation (Choosing k=4)**")
+#     st.write(
+#         r"To ensure scientific rigor, we evaluated K-Means across $k \in [2, 8]$ using **Inertia (Elbow Method)** "
+#         r"and the **Silhouette Score**:"
+#     )
     
-    diagnostics_df = get_diagnostics(features_df)
-    fig_diag = plot_elbow_and_silhouette(diagnostics_df, selected_k=k_clusters)
-    st.plotly_chart(fig_diag, width="stretch")
+#     diagnostics_df = get_diagnostics(features_df)
+#     fig_diag = plot_elbow_and_silhouette(diagnostics_df, selected_k=k_clusters)
+#     st.plotly_chart(fig_diag, width="stretch")
     
-    st.markdown("""
-    * **Elbow Inflection:** The inertia curve shows a distinct reduction up to $k=4$, after which gains plateau.
-    * **Silhouette Quality:** $k=4$ achieves a high silhouette score (Approx 0.45), confirming well-separated clusters.
-    * **Operational Fit:** 4 clusters naturally map to the IMD's standard hazard scale: *Low, Moderate, High, Extreme Hotspot*.
-    """)
+#     st.markdown("""
+#     * **Elbow Inflection:** The inertia curve shows a distinct reduction up to $k=4$, after which gains plateau.
+#     * **Silhouette Quality:** $k=4$ achieves a high silhouette score (Approx 0.45), confirming well-separated clusters.
+#     * **Operational Fit:** 4 clusters naturally map to the IMD's standard hazard scale: *Low, Moderate, High, Extreme Hotspot*.
+#     """)

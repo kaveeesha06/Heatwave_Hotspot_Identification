@@ -29,21 +29,22 @@ Heatwave occurrence and severity vary widely across regions of India. Looking at
 
 > Raw data is not committed to the repository. Download it from the IMD link above into `data/raw/`.
 
-## 4. Tech Stack
+## 4. Final Tech Stack
 
-| Layer | Tool | Purpose |
+The table below lists the final technologies and libraries utilized in this project:
+
+| Layer | Tool / Library | Role & Specific Purpose |
 |---|---|---|
-| Data extraction | Python, `numpy`, `imdlib` | Read IMD `.GRD` files |
-| Processing | `pandas`, `xarray` (optional) | Gridded time series handling and feature computation |
-| Machine learning | `scikit-learn` | `KMeans`, `StandardScaler`, silhouette and Davies-Bouldin scores |
-| Visualization | `plotly` (or `folium`) | Interactive maps and plots |
-| Dashboard | `streamlit` | Web interface in pure Python |
-| Storage (optional) | Parquet / SQLite | Cache processed features |
-| Tooling | Jupyter, VS Code, Git/GitHub | Exploration, development, version control |
-
-**Notes on choices**
-- `xarray` is convenient for 3D (time x lat x lon) data but not mandatory. Data can be converted to a flat `pandas` table right after loading.
-- Alternatives to Streamlit: Dash, Gradio, Panel, Voila, or Flask/FastAPI with a Leaflet frontend.
+| **Programming Language** | Python (3.10+) | Core programming language for data pipelines, modeling, and dashboard |
+| **Data Ingestion** | `imdlib` | Communicates with IMD Pune servers, downloads `.GRD` binaries, and parses binary grids |
+| **Array Computing** | `numpy` | Multi-dimensional grid arrays, binary reshaping, and numerical operations |
+| **Gridded Data Handling** | `xarray` | Multidimensional climate dataset representation across `(time, lat, lon)` |
+| **Data Manipulation** | `pandas` | Tabular data transformations, temporal filtering, and grid-level feature aggregations |
+| **Machine Learning** | `scikit-learn` | `StandardScaler` (feature scaling), `KMeans` (clustering), and clustering metrics (`silhouette_score`, `davies_bouldin_score`, `calinski_harabasz_score`) |
+| **Feature Storage** | `pyarrow` (Apache Parquet) | High-performance, columnar disk caching for engineered feature tables in `data/processed/` |
+| **Interactive Visualization** | `plotly` (`plotly.express` & `plotly.graph_objects`) | Geospatial scatter maps (`scatter_map`), normalized radar profiles, and dual-axis diagnostic plots |
+| **Web Dashboard** | `streamlit` | Modern, single-page reactive decision-support dashboard (`app.py`) |
+| **Exploration & Reporting** | Jupyter Notebook (`notebooks/`) | Step-by-step EDA, k-selection experiments, and meteorological validation report |
 
 ## 5. How It Works
 
