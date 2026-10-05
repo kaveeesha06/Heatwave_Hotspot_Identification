@@ -27,15 +27,9 @@ from src.features import (
 )
 from src.cluster import (
     fit_kmeans_and_label,
-    evaluate_k_range,
     SEVERITY_COLORS
 )
-from src.plots import (
-    plot_hotspot_map,
-    plot_elbow_and_silhouette,
-    plot_clustering_diagnostics,
-    plot_cluster_radar
-)
+from src.plots import plot_hotspot_map
 
 
 # Page setup
@@ -88,9 +82,7 @@ def load_data(start_year: int, end_year: int):
     )
 
 
-@st.cache_data(show_spinner=False)
-def get_diagnostics(features_df: pd.DataFrame):
-    return evaluate_k_range(features_df, feature_cols=CORE_HEAT_FEATURES, k_min=2, k_max=8)
+
 
 
 # --- SIDEBAR CONTROLS ---
@@ -243,11 +235,6 @@ summary_display = summary_table[available_cols].rename(columns=rename_cols)
 # Format for clean display
 st.dataframe(summary_display, width="stretch", hide_index=True)
 
-# Cluster Thermal Radar Profile
-with st.expander("Cluster Thermal Radar Profile"):
-    fig_radar = plot_cluster_radar(profiles_df)
-    st.plotly_chart(fig_radar, width="stretch")
-
 
 # --- 4. ACTION ADVISORIES & EARLY WARNING (PHASE V) ---
 # st.markdown("### Recommended Early Warning Actions")
@@ -278,27 +265,3 @@ with st.expander("Cluster Thermal Radar Profile"):
 # st.info("""
 # **Moderate & Low Severity Tiers (Yellow / Green):** Coastal areas (Konkan, Goa, Kerala) and Western Himalayas. Standard seasonal monitoring. Maintain regular drinking water supplies and advisories.
 # """)
-
-
-# --- 5. TECHNICAL DETAILS EXPANDER ---
-with st.expander("🔬 View Machine Learning Diagnostics & Justification (K=2 to 8)"):
-    st.markdown("#### **Hyperparameter Validation (Evaluating K=2 to 8)**")
-    st.write(
-        r"Evaluated K-Means clustering across $k \in [2, 8]$ using **Inertia / WCSS**, **Silhouette Score**, "
-        r"**Davies-Bouldin Index**, and **Calinski-Harabasz Index** on the standardized 4-feature heat model "
-        r"(`tmax_mean`, `tmax_max`, `hot_days_ge_40`, `heatwave_days`):"
-    )
-    
-    diagnostics_df = get_diagnostics(features_df)
-    st.dataframe(diagnostics_df, width="stretch", hide_index=True)
-    
-    fig_diag = plot_clustering_diagnostics(diagnostics_df, selected_k=k_clusters)
-    st.plotly_chart(fig_diag, width="stretch")
-    
-    st.markdown(r"""
-    * **Elbow Inflection:** The inertia curve shows a sharp reduction up to $k=4$ (Inertia = 206.97), after which marginal gains level off.
-    * **Silhouette Quality:** $k=4$ achieves **0.4580**, indicating well-defined separation across thermal severity tiers.
-    * **Davies-Bouldin Index:** $k=4$ achieves **0.7210** (lower is better), confirming compact cluster centroids.
-    * **Calinski-Harabasz Index:** $k=4$ attains a prominent local peak of **685.72**, maximizing between-cluster to within-cluster dispersion.
-    * **Operational Hazard Scale:** 4 clusters naturally correspond to the IMD hazard tiers: *Low, Moderate, High, Extreme Hotspot*.
-    """)
