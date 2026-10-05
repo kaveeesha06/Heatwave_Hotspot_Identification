@@ -32,7 +32,9 @@ from src.cluster import (
 )
 from src.plots import (
     plot_hotspot_map,
-    plot_elbow_and_silhouette
+    plot_elbow_and_silhouette,
+    plot_clustering_diagnostics,
+    plot_cluster_radar
 )
 
 
@@ -211,7 +213,7 @@ st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
 
 # --- 2. INTERACTIVE GEOGRAPHIC MAP ---
 st.markdown("### 🗺️ Geographic Heatwave Hotspots Map")
-st.caption("Hover over any grid point to view its coordinates, region, average temperature, and hot streak length.")
+st.caption("Hover over any grid point to view its coordinates, region, mean/max temperature, days >= 40°C, and heatwave days.")
 
 fig_map = plot_hotspot_map(
     display_df,
@@ -230,16 +232,21 @@ rename_cols = {
     "cluster_name": "Severity Tier",
     "cell_count": "Grid Cells",
     "pct_land_area": "% of India",
-    "tmax_mean": "Avg Temp (°C)",
-    "tmax_max": "Max Temp (°C)",
-    "hot_days_ge_40": f"Hot Days (≥{hot_temp_threshold}°C)",
-    "longest_hot_streak": "Max Streak (Days)"
+    "tmax_mean": "Mean Tmax (°C)",
+    "tmax_max": "Max Tmax (°C)",
+    "hot_days_ge_40": f"Days >= {hot_temp_threshold:.0f}°C",
+    "heatwave_days": "Heatwave Days"
 }
 available_cols = [c for c in rename_cols.keys() if c in summary_table.columns]
 summary_display = summary_table[available_cols].rename(columns=rename_cols)
 
 # Format for clean display
 st.dataframe(summary_display, width="stretch", hide_index=True)
+
+# Cluster Thermal Radar Profile
+with st.expander("Cluster Thermal Radar Profile"):
+    fig_radar = plot_cluster_radar(profiles_df)
+    st.plotly_chart(fig_radar, width="stretch")
 
 
 # --- 4. ACTION ADVISORIES & EARLY WARNING (PHASE V) ---
@@ -273,20 +280,25 @@ st.dataframe(summary_display, width="stretch", hide_index=True)
 # """)
 
 
-# # --- 5. OPTIONAL TECHNICAL DETAILS EXPANDER ---
-# with st.expander("View Machine Learning Diagnostics & Justification (Elbow & Silhouette)"):
-#     st.markdown("#### **Hyperparameter Validation (Choosing k=4)**")
-#     st.write(
-#         r"To ensure scientific rigor, we evaluated K-Means across $k \in [2, 8]$ using **Inertia (Elbow Method)** "
-#         r"and the **Silhouette Score**:"
-#     )
+# --- 5. TECHNICAL DETAILS EXPANDER ---
+with st.expander("🔬 View Machine Learning Diagnostics & Justification (K=2 to 8)"):
+    st.markdown("#### **Hyperparameter Validation (Evaluating K=2 to 8)**")
+    st.write(
+        r"Evaluated K-Means clustering across $k \in [2, 8]$ using **Inertia / WCSS**, **Silhouette Score**, "
+        r"**Davies-Bouldin Index**, and **Calinski-Harabasz Index** on the standardized 4-feature heat model "
+        r"(`tmax_mean`, `tmax_max`, `hot_days_ge_40`, `heatwave_days`):"
+    )
     
-#     diagnostics_df = get_diagnostics(features_df)
-#     fig_diag = plot_elbow_and_silhouette(diagnostics_df, selected_k=k_clusters)
-#     st.plotly_chart(fig_diag, width="stretch")
+    diagnostics_df = get_diagnostics(features_df)
+    st.dataframe(diagnostics_df, width="stretch", hide_index=True)
     
-#     st.markdown("""
-#     * **Elbow Inflection:** The inertia curve shows a distinct reduction up to $k=4$, after which gains plateau.
-#     * **Silhouette Quality:** $k=4$ achieves a high silhouette score (Approx 0.45), confirming well-separated clusters.
-#     * **Operational Fit:** 4 clusters naturally map to the IMD's standard hazard scale: *Low, Moderate, High, Extreme Hotspot*.
-#     """)
+    fig_diag = plot_clustering_diagnostics(diagnostics_df, selected_k=k_clusters)
+    st.plotly_chart(fig_diag, width="stretch")
+    
+    st.markdown(r"""
+    * **Elbow Inflection:** The inertia curve shows a sharp reduction up to $k=4$ (Inertia = 206.97), after which marginal gains level off.
+    * **Silhouette Quality:** $k=4$ achieves **0.4580**, indicating well-defined separation across thermal severity tiers.
+    * **Davies-Bouldin Index:** $k=4$ achieves **0.7210** (lower is better), confirming compact cluster centroids.
+    * **Calinski-Harabasz Index:** $k=4$ attains a prominent local peak of **685.72**, maximizing between-cluster to within-cluster dispersion.
+    * **Operational Hazard Scale:** 4 clusters naturally correspond to the IMD hazard tiers: *Low, Moderate, High, Extreme Hotspot*.
+    """)

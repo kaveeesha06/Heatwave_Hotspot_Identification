@@ -76,12 +76,12 @@ def evaluate_k_range(
     df: pd.DataFrame,
     feature_cols: Optional[List[str]] = None,
     k_min: int = 2,
-    k_max: int = 10,
+    k_max: int = 8,
     random_state: int = 42
 ) -> pd.DataFrame:
     """
-    Runs K-Means across k_min to k_max to compute:
-      - Inertia (Elbow method: within-cluster sum of squares)
+    Runs K-Means across k_min to k_max (k=2 through 8) to compute:
+      - Inertia / WCSS (Elbow method: within-cluster sum of squares)
       - Silhouette Score (higher is better, range [-1, 1])
       - Davies-Bouldin Index (lower is better)
       - Calinski-Harabasz Score (higher is better)
@@ -116,9 +116,15 @@ def fit_kmeans_and_label(
     random_state: int = 42
 ) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
     """
-    Fits K-Means for a given k, ranks clusters monotonically by heat severity,
+    Fits K-Means for a given k (default k=4, n_init=10, random_state=42),
+    calculating Euclidean distance across the 4 standardized features:
+      d = sqrt((z1-c1)^2 + (z2-c2)^2 + (z3-c3)^2 + (z4-c4)^2)
+    Assigns each grid cell to nearest centroid, recalculates centroids as mean of assigned cells,
+    and repeats until convergence.
+    Ranks clusters monotonically by heat severity, primarily using mean hot_days_ge_40
+    (while considering overall thermal profile),
     assigns human-interpretable severity labels (Low, Moderate, High, Extreme Hotspot),
-    and computes cluster profile summaries.
+    and computes cluster profile summaries for the 4 core heat features.
     """
     cols = feature_cols or CORE_HEAT_FEATURES
     X_scaled, scaler, _ = prepare_feature_matrix(df, feature_cols=cols)
@@ -150,17 +156,16 @@ def fit_kmeans_and_label(
     # Compute evaluation metrics
     sil = float(silhouette_score(X_scaled, temp_df["cluster_id"].values))
     db = float(davies_bouldin_score(X_scaled, temp_df["cluster_id"].values))
+    ch = float(calinski_harabasz_score(X_scaled, temp_df["cluster_id"].values))
     inertia = float(kmeans.inertia_)
 
-    # Generate Cluster Profiles Summary Table
+    # Generate Cluster Profiles Summary Table using the 4 core clustering features
     profile_aggs = {
         "grid_id": "count",
         "tmax_mean": "mean",
         "tmax_max": "max",
         "hot_days_ge_40": "mean",
-        "heatwave_days": "mean",
-        "longest_hot_streak": "mean",
-        "tmax_std": "mean"
+        "heatwave_days": "mean"
     }
     # Keep only available columns
     actual_aggs = {c: agg for c, agg in profile_aggs.items() if c in temp_df.columns}
@@ -178,6 +183,7 @@ def fit_kmeans_and_label(
         "features": cols,
         "silhouette_score": round(sil, 4),
         "davies_bouldin": round(db, 4),
+        "calinski_harabasz": round(ch, 2),
         "inertia": round(inertia, 2),
         "scaler": scaler,
         "kmeans_model": kmeans,
@@ -217,11 +223,22 @@ if __name__ == "__main__":
     diagnostics = evaluate_k_range(df_feat, k_min=2, k_max=8)
     print(diagnostics.to_string(index=False))
 
+    # Save evaluation metrics table
+    csv_eval_path = Path("data/processed/clustering_evaluation_metrics.csv")
+    diagnostics.to_csv(csv_eval_path, index=False)
+    print(f"\nSaved evaluation metrics table to: {csv_eval_path}")
+
     print("\n" + "=" * 60)
     print("Fitting K-Means with k=4 (Low, Moderate, High, Extreme)")
     print("=" * 60)
     labeled_df, profiles, meta = fit_kmeans_and_label(df_feat, k=4)
-    print(f"Silhouette Score: {meta['silhouette_score']} | Davies-Bouldin: {meta['davies_bouldin']}")
+    print(
+        f"Final K=4 Metrics:\n"
+        f"  - Inertia / WCSS        : {meta['inertia']}\n"
+        f"  - Silhouette Score      : {meta['silhouette_score']}\n"
+        f"  - Davies-Bouldin Index  : {meta['davies_bouldin']}\n"
+        f"  - Calinski-Harabasz     : {meta['calinski_harabasz']}"
+    )
     print("\nCluster Profiles Summary Table:")
     print(profiles.to_string(index=False))
 

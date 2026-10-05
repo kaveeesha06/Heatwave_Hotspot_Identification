@@ -63,22 +63,39 @@ Download Tmax GRD files from IMD and load them with `imdlib`, giving daily Tmax 
 - Flatten to one row per grid cell.
 
 ### Step 3: Feature engineering
-K-Means on raw Tmax gives uninteresting results, so features are built per grid cell:
+K-Means on raw Tmax gives uninteresting results, so 4 core heat behavioral features are selected for K-Means clustering:
 
-- Mean seasonal Tmax
-- Maximum Tmax recorded
-- Number of days with Tmax >= 40 C
-- Number of heatwave days (IMD criteria: Tmax >= 40 C in plains and at least 4.5 C above normal, or Tmax >= 45 C)
-- Longest consecutive hot-day streak
-- Standard deviation of Tmax
+- **Mean seasonal Tmax (`tmax_mean`):** Represents overall heat level
+- **Maximum Tmax recorded (`tmax_max`):** Represents peak/extreme heat
+- **Number of days with Tmax >= 40°C (`hot_days_ge_40`):** Represents frequency of very high temperatures
+- **Number of heatwave days (`heatwave_days`):** Days satisfying IMD heatwave criteria (Tmax >= 45°C or departure >= +4.5°C)
+
+*(Note: Extended features such as `longest_hot_streak` and `tmax_std` are computed and retained in the dataset for exploratory analysis, but are excluded from the K-Means input matrix).*
 
 Latitude and longitude are deliberately **excluded** so that clusters reflect heat behavior rather than geography. Including them would force spatially contiguous clusters.
 
 ### Step 4: Scaling
-`StandardScaler` is applied because K-Means is distance-based and sensitive to feature scale.
+`StandardScaler` is applied across the 4 core features because K-Means is distance-based and sensitive to feature scale.
 
 ### Step 5: Choosing k
-Run K-Means for k = 2 to 10 and compare the elbow curve (inertia) and silhouette score. Typically k between 3 and 5 works well; the final choice is justified in the report.
+Run K-Means for k = 2 to 8 and compare the elbow curve (inertia), silhouette score, Davies-Bouldin index, and Calinski-Harabasz score:
+
+| $k$ | Inertia (WCSS) | Silhouette Score | Davies-Bouldin Index | Calinski-Harabasz Index |
+|:---:|:---:|:---:|:---:|:---:|
+| 2 | 522.27 | 0.5339 | 0.6879 | 606.76 |
+| 3 | 314.95 | 0.4665 | 0.7292 | 617.52 |
+| **4** | **206.97** | **0.4580** | **0.7210** | **685.72** |
+| 5 | 164.83 | 0.4583 | 0.6852 | 666.32 |
+| 6 | 127.73 | 0.4455 | 0.7879 | 706.16 |
+| 7 | 106.69 | 0.4647 | 0.6968 | 713.97 |
+| 8 | 93.16 | 0.4659 | 0.6945 | 706.03 |
+
+**Selection Justification for $k = 4$:**
+- **Elbow Inflection:** Distinct elbow bend at $k=4$ (Inertia = 206.97); marginal variance explained plateaus thereafter (drop to $k=5$ is only 42.14).
+- **Silhouette Quality:** Strong cluster cohesion and separation score of **0.4580**.
+- **Davies-Bouldin Index:** Favorable score of **0.7210** indicating compact clusters.
+- **Calinski-Harabasz Index:** Prominent local peak of **685.72**, maximizing between-cluster to within-cluster dispersion.
+- **Operational Fit:** Exactly aligns with IMD's 4-tier alert framework: *Low, Moderate, High, Extreme Hotspot*.
 
 ### Step 6: Clustering and labeling
 Fit K-Means, rank clusters by mean hot-day count or mean Tmax, and label them (Low, Moderate, High, Extreme). The top cluster is reported as the **heatwave hotspot**. This provides a simple severity classification in line with the use case.
@@ -87,14 +104,14 @@ Fit K-Means, rank clusters by mean hot-day count or mean Tmax, and label them (L
 The Streamlit app shows:
 - Map of India with grid cells colored by cluster
 - Sidebar filters: year, month/season, number of clusters (k)
-- Cluster profile table (average Tmax, hot days per cluster)
-- Elbow and silhouette plots
+- Cluster profile table (average Tmax, max Tmax, hot days, heatwave days)
+- 4-panel diagnostic evaluation plots (Inertia, Silhouette, Davies-Bouldin, Calinski-Harabasz)
 - Optional: region-wise view using the seven IMD-defined regions
 
 ### Step 8: Validation
 - Compare the extreme cluster with known heatwave-prone zones (central India, Rajasthan, Vidarbha, Odisha coast, Andhra Pradesh).
 - Check cluster stability across different years.
-- Report silhouette score and Davies-Bouldin index.
+- Final K=4 evaluation metrics: Silhouette = 0.4580, Davies-Bouldin = 0.7210, Calinski-Harabasz = 685.72, and Inertia = 206.97.
 
 ## 6. Project Structure
 
@@ -162,7 +179,7 @@ python src/load_data.py
 > **Output:** Raw files stored in `data/raw/tmax/` (`2022.GRD`, `2023.GRD`, `2024.GRD`). Includes an offline synthetic generator fallback if IMD servers are unreachable.
 
 #### Step 3: Engineer Per-Grid-Cell Thermal Features
-Computes 6 seasonal heat behavior metrics (Mean $T_{max}$, Peak $T_{max}$, Days $\ge 40^\circ\text{C}$, Heatwave days, Max hot streak, Temp volatility) over the March–June heatwave season:
+Computes seasonal heat behavior metrics and defines the 4 core heat features for K-Means (Mean $T_{max}$, Peak $T_{max}$, Days $\ge 40^\circ\text{C}$, Heatwave days) over the March–June heatwave season:
 
 ```bash
 python src/features.py
@@ -170,7 +187,7 @@ python src/features.py
 > **Output:** Caches clean feature tables in `data/processed/` (`features_heatwave_season.parquet` and individual year parquets).
 
 #### Step 4: Run K-Means Clustering & Scientific Diagnostics
-Standardizes features with `StandardScaler`, sweeps $k \in [2, 8]$ computing **Inertia (Elbow)** and **Silhouette scores**, fits $k=4$, and validates against known heatwave zones:
+Standardizes the 4 core features with `StandardScaler`, sweeps $k \in [2, 8]$ computing **Inertia (Elbow)**, **Silhouette score**, **Davies-Bouldin index**, and **Calinski-Harabasz score**, fits $k=4$, and validates against known heatwave zones:
 
 ```bash
 python src/cluster.py

@@ -23,16 +23,18 @@ from src.load_data import load_heatwave_season_dataframe, get_available_raw_year
 
 
 # Core behavioral features used for K-Means clustering (Lat & Lon strictly excluded)
+# 4 core features: overall heat level, peak/extreme heat, hot day frequency, heatwave days
 CORE_HEAT_FEATURES = [
     "tmax_mean",
     "tmax_max",
     "hot_days_ge_40",
-    "heatwave_days",
-    "longest_hot_streak",
-    "tmax_std"
+    "heatwave_days"
 ]
 
+# Extended features available in dataset for broader meteorological analysis
 EXTENDED_HEAT_FEATURES = CORE_HEAT_FEATURES + [
+    "longest_hot_streak",
+    "tmax_std",
     "severe_heatwave_days",
     "tmax_p90"
 ]

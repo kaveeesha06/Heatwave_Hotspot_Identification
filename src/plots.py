@@ -46,7 +46,6 @@ def plot_hotspot_map(
         "tmax_max": ":.2f",
         "hot_days_ge_40": True,
         "heatwave_days": True,
-        "longest_hot_streak": True,
         "cluster_id": False
     }
 
@@ -214,21 +213,127 @@ def plot_elbow_and_silhouette(
     return fig
 
 
+def plot_clustering_diagnostics(
+    diagnostics_df: pd.DataFrame,
+    selected_k: int = 4
+) -> go.Figure:
+    """
+    Renders 4-panel interactive diagnostic chart across k=2..8:
+      1. Inertia / WCSS (Elbow curve)
+      2. Silhouette Score (clustering quality)
+      3. Davies-Bouldin Index (cluster compactness / separation, lower is better)
+      4. Calinski-Harabasz Index (variance ratio, higher is better)
+    Highlights selected k with prominent star markers.
+    """
+    fig = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=(
+            "<b>1. Elbow Curve: Inertia (WCSS) vs k</b>",
+            "<b>2. Silhouette Score vs k (Higher is Better)</b>",
+            "<b>3. Davies-Bouldin Index vs k (Lower is Better)</b>",
+            "<b>4. Calinski-Harabasz Index vs k (Higher is Better)</b>"
+        )
+    )
+
+    k_vals = diagnostics_df["k"]
+
+    # 1. Inertia
+    fig.add_trace(
+        go.Scatter(
+            x=k_vals, y=diagnostics_df["inertia"], mode="lines+markers",
+            name="Inertia (WCSS)", line=dict(color="#1f77b4", width=3),
+            marker=dict(size=8, color="#1f77b4")
+        ),
+        row=1, col=1
+    )
+
+    # 2. Silhouette
+    fig.add_trace(
+        go.Scatter(
+            x=k_vals, y=diagnostics_df["silhouette_score"], mode="lines+markers",
+            name="Silhouette Score", line=dict(color="#2ca02c", width=3),
+            marker=dict(size=8, color="#2ca02c")
+        ),
+        row=1, col=2
+    )
+
+    # 3. Davies-Bouldin
+    fig.add_trace(
+        go.Scatter(
+            x=k_vals, y=diagnostics_df["davies_bouldin"], mode="lines+markers",
+            name="Davies-Bouldin Index", line=dict(color="#ff7f0e", width=3),
+            marker=dict(size=8, color="#ff7f0e")
+        ),
+        row=2, col=1
+    )
+
+    # 4. Calinski-Harabasz
+    fig.add_trace(
+        go.Scatter(
+            x=k_vals, y=diagnostics_df["calinski_harabasz"], mode="lines+markers",
+            name="Calinski-Harabasz Index", line=dict(color="#9467bd", width=3),
+            marker=dict(size=8, color="#9467bd")
+        ),
+        row=2, col=2
+    )
+
+    # Highlight selected k
+    sel_row = diagnostics_df[diagnostics_df["k"] == selected_k]
+    if len(sel_row) > 0:
+        val_inertia = sel_row["inertia"].values[0]
+        val_sil = sel_row["silhouette_score"].values[0]
+        val_db = sel_row["davies_bouldin"].values[0]
+        val_ch = sel_row["calinski_harabasz"].values[0]
+
+        for r, c, val in [
+            (1, 1, val_inertia),
+            (1, 2, val_sil),
+            (2, 1, val_db),
+            (2, 2, val_ch)
+        ]:
+            fig.add_trace(
+                go.Scatter(
+                    x=[selected_k], y=[val], mode="markers",
+                    marker=dict(size=14, color="#d62728", symbol="star"),
+                    name=f"Selected k={selected_k}",
+                    showlegend=(r == 1 and c == 1)
+                ),
+                row=r, col=c
+            )
+
+    for r in [1, 2]:
+        for c in [1, 2]:
+            fig.update_xaxes(title_text="Number of Clusters (k)", row=r, col=c, dtick=1)
+
+    fig.update_yaxes(title_text="Inertia", row=1, col=1)
+    fig.update_yaxes(title_text="Silhouette Score", row=1, col=2)
+    fig.update_yaxes(title_text="Davies-Bouldin Index", row=2, col=1)
+    fig.update_yaxes(title_text="Calinski-Harabasz Index", row=2, col=2)
+
+    fig.update_layout(
+        height=660,
+        margin={"r": 20, "t": 50, "l": 40, "b": 40},
+        template="plotly_white",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+    )
+
+    return fig
+
+
 def plot_cluster_radar(
     profiles_df: pd.DataFrame,
     features: Optional[List[str]] = None
 ) -> go.Figure:
     """
-    Renders radar / polar chart comparing the normalized feature footprints across clusters.
+    Renders radar / polar chart comparing the 4 normalized core heat feature footprints across clusters:
+    Mean Tmax, Max Tmax, Days >= 40°C, and Heatwave Days.
     """
-    feat_cols = features or ["tmax_mean", "tmax_max", "hot_days_ge_40", "heatwave_days", "longest_hot_streak", "tmax_std"]
+    feat_cols = features or ["tmax_mean", "tmax_max", "hot_days_ge_40", "heatwave_days"]
     friendly_names = {
         "tmax_mean": "Mean Tmax (°C)",
         "tmax_max": "Max Tmax (°C)",
-        "hot_days_ge_40": "Hot Days (≥40°C)",
-        "heatwave_days": "Heatwave Days",
-        "longest_hot_streak": "Max Hot Streak",
-        "tmax_std": "Temp Volatility (Std)"
+        "hot_days_ge_40": "Days >= 40°C",
+        "heatwave_days": "Heatwave Days"
     }
 
     norm_df = profiles_df.copy()
@@ -342,7 +447,7 @@ def plot_region_breakdown(labeled_df: pd.DataFrame) -> go.Figure:
 
 
 if __name__ == "__main__":
-    from src.cluster import fit_kmeans_and_label
+    from src.cluster import fit_kmeans_and_label, evaluate_k_range
     feat_file = Path("data/processed/features_heatwave_season.parquet")
     df_feat = pd.read_parquet(feat_file)
     labeled, profs, meta = fit_kmeans_and_label(df_feat, k=4)
@@ -350,3 +455,6 @@ if __name__ == "__main__":
     print("plot_hotspot_map built successfully:", type(fig_map))
     fig_radar = plot_cluster_radar(profs)
     print("plot_cluster_radar built successfully:", type(fig_radar))
+    diag_df = evaluate_k_range(df_feat, k_min=2, k_max=8)
+    fig_diag = plot_clustering_diagnostics(diag_df, selected_k=4)
+    print("plot_clustering_diagnostics built successfully:", type(fig_diag))
